@@ -1,7 +1,6 @@
 ﻿using Exiled.API.Enums;
 using Exiled.API.Extensions;
 using Exiled.API.Features;
-using Exiled.API.Features.Items;
 using Exiled.CustomItems.API.Features;
 using Exiled.CustomRoles.API;
 using Exiled.CustomRoles.API.Features;
@@ -192,14 +191,22 @@ namespace AFKReplacer
             var playerMaxArtificialHealth = playerToReplace.MaxArtificialHealth;
             var playerHumeShield = playerToReplace.HumeShield;
             var playerCuffer = playerToReplace.Cuffer;
-            var playerInventory = new List<Item>();
             foreach (var item in playerToReplace.Items.ToArray())
             {
                 CustomItem.TryGet(item, out CustomItem? custom);
                 spectator.GiveItemDelayed(item.Clone(), custom);
-                playerInventory.Remove(item);
                 item.Destroy();
             }
+            foreach (KeyValuePair<ItemType, ushort> ammo in playerToReplace.Ammo)
+            {
+                Timing.CallDelayed(2f, () =>
+                {
+                    Log.Info($"Player {playerToReplace} being replaced has {ammo.Value} of {ammo.Key}");
+                    spectator.AddItem(ammo.Key);
+                });
+            }
+            playerToReplace.ClearInventory();
+
 
             spectator.Broadcast(10, $"<color=yellow>You have replaced an AFK player and become <color={playerToReplace.Role.Color.ToHex()}>{roleName}</color>.</color>");
             Timing.CallDelayed(2f, () =>
