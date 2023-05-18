@@ -1,6 +1,7 @@
 ﻿using Exiled.API.Enums;
 using Exiled.API.Extensions;
 using Exiled.API.Features;
+using Exiled.API.Features.Roles;
 using Exiled.CustomItems.API.Features;
 using Exiled.CustomRoles.API;
 using Exiled.CustomRoles.API.Features;
@@ -100,10 +101,10 @@ namespace AFKReplacer
                             var oldPosition = playerData.LastPlayerPosition;
                             var newPosition = player.Position;
 
-                            if (player.Role.Type == RoleTypeId.Scp079)
+                            if (player.Role.Is(out Scp079Role scp))
                             {
-                                newPosition = player.CurrentRoom.Position;
-                                newRotation = player.CameraTransform.eulerAngles;
+                                newPosition = scp.CameraPosition;
+                                newRotation = scp.Camera.Rotation;
                             }
 
                             // if not afk, i.e. is moving
@@ -198,6 +199,21 @@ namespace AFKReplacer
             var playerMaxArtificialHealth = playerToReplace.MaxArtificialHealth;
             var playerHumeShield = playerToReplace.HumeShield;
             var playerCuffer = playerToReplace.Cuffer;
+            if (playerToReplace.Role.Is(out Scp079Role scp))
+            {
+                var playerEnergy = scp.Energy;
+                var playerXP = scp.Experience;
+                var playerLevel = scp.Level;
+                Timing.CallDelayed(2f, () =>
+                {
+                    if (spectator.Role.Is(out Scp079Role newScp))
+                    {
+                        newScp.Energy = playerEnergy;
+                        newScp.Experience = playerXP;
+                        newScp.Level = playerLevel;
+                    }
+                });
+            }
             foreach (var item in playerToReplace.Items.ToArray())
             {
                 CustomItem.TryGet(item, out CustomItem? custom);
