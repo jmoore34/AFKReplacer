@@ -82,7 +82,9 @@ namespace AFKReplacer
                             && player.Position != null
                             && player.Role.Type != RoleTypeId.Scp079
                             // skip staff, unless staff are not immune
-                            && (!player.RemoteAdminAccess || !Config.StaffAfkImmune))
+                            && (!player.RemoteAdminAccess || !Config.StaffAfkImmune)
+                            // skip tutorials, unless custom class e.g. serpents hand
+                            && (player.Role.Type != RoleTypeId.Tutorial || !player.GetCustomRoles().IsEmpty()))
                         {
                             PlayerData playerData;
                             var hasData = playerDataMap.TryGetValue(player, out playerData);
