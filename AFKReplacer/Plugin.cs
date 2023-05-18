@@ -80,7 +80,6 @@ namespace AFKReplacer
                             && player.IsAlive
                             && player.Rotation != null
                             && player.Position != null
-                            && player.Role.Type != RoleTypeId.Scp079
                             // skip staff, unless staff are not immune
                             && (!player.RemoteAdminAccess || !Config.StaffAfkImmune)
                             // skip tutorials, unless custom class e.g. serpents hand
@@ -100,6 +99,12 @@ namespace AFKReplacer
 
                             var oldPosition = playerData.LastPlayerPosition;
                             var newPosition = player.Position;
+
+                            if (player.Role.Type == RoleTypeId.Scp079)
+                            {
+                                newPosition = player.CurrentRoom.Position;
+                                newRotation = player.CameraTransform.eulerAngles;
+                            }
 
                             // if not afk, i.e. is moving
                             if (oldRotation == null || oldRotation != newRotation || oldPosition == null || oldPosition != newPosition)
