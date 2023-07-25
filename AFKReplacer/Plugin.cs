@@ -224,7 +224,6 @@ namespace AFKReplacer
             {
                 Timing.CallDelayed(2f, () =>
                 {
-                    Log.Info($"Player {playerToReplace} being replaced has {ammo.Value} of {ammo.Key}");
                     spectator.AddItem(ammo.Key);
                 });
             }

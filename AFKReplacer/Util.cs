@@ -35,17 +35,13 @@ namespace AFKReplacer
 
         public static void GiveItemDelayed(this Player player, Item item, CustomItem? customItemType)
         {
-            Log.Info($"Give item start: {player} {item}");
             Timing.CallDelayed(3f, () =>
             {
-                Log.Info($"Give item after delay{player} {item}");
                 player.AddItem(item);
                 if (customItemType is not null)
                 {
-                    Log.Info($"Custom item: {customItemType}");
                     customItemType.TrackedSerials.Add(item.Serial);
                 }
-                Log.Info($"Give item end: {player} {item}");
             });
         }
 
