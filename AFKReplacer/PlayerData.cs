@@ -8,7 +8,7 @@ namespace AFKReplacer
         public Vector3 LastPlayerPosition { get; set; } = Vector3.zero;
 
         // The last recorded rotation of the player
-        public Vector3 LastPlayerRotation { get; set; } = Vector3.zero;
+        public Quaternion LastPlayerRotation { get; set; } = Quaternion.identity;
 
         // How many seconds since the player's rotation has changed
         public int SecondsSinceRotationChange { get; set; } = 0;
