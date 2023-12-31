@@ -1,6 +1,7 @@
-using Exiled.API.Enums;
+﻿using Exiled.API.Enums;
 using Exiled.API.Extensions;
 using Exiled.API.Features;
+using Exiled.API.Features.Items;
 using Exiled.API.Features.Roles;
 using Exiled.CustomItems.API.Features;
 using Exiled.CustomRoles.API;
@@ -11,7 +12,10 @@ using MEC;
 using PlayerRoles;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace AFKReplacer
 {
@@ -20,6 +24,8 @@ namespace AFKReplacer
         public override string Name => "AFK Replacer";
         public override string Author => "Jon M";
         public override Version Version => new Version(1, 0, 0);
+
+        public static string LogfileName => "afk_log.txt";
 
         // Singleton pattern allows easy access to the central state from other classes
         // (e.g. commands)
@@ -148,6 +154,10 @@ namespace AFKReplacer
                                 }
 
                                 playerData.SecondsSinceRotationChange++;
+
+                                if (playerData.SecondsSinceRotationChange >= 600 && playerData.SecondsSinceRotationChange % 60 == 0 ) {
+                                    File.AppendAllText(LogfileName, $"{DateTime.Now.ToString("yyyy-MM-dd'T'HH:mm:ss", DateTimeFormatInfo.InvariantInfo)} Player {player} has been AFK for {playerData.SecondsSinceRotationChange / 60} minutes");
+                                }
                             }
                             playerData.LastPlayerRotation = newRotation;
                             playerData.LastPlayerPosition = newPosition;
@@ -185,7 +195,7 @@ namespace AFKReplacer
 
             var spectator = spectators.RandomElement();
 
-            spectator.Role.Set(playerToReplace.Role.Type, SpawnReason.Respawn, RoleSpawnFlags.UseSpawnpoint);
+            spectator.Role.Set(playerToReplace.Role.Type, SpawnReason.ForceClass, RoleSpawnFlags.UseSpawnpoint);
             var roleName = $"<color={playerToReplace.Role.Color.ToHex()}>{playerToReplace.Role.Type.GetFullName()}</color>";
             foreach (CustomRole role in playerToReplace.GetCustomRoles())
             {

@@ -1,6 +1,7 @@
 ﻿using CommandSystem;
 using Exiled.API.Features;
 using System;
+using System.IO;
 using System.Linq;
 
 namespace AFKReplacer
@@ -50,6 +51,35 @@ namespace AFKReplacer
                 Util.DespawnAndReplace(target);
                 response = $"Replaced player {target.Nickname}";
                 return true;
+            }
+        }
+
+        [CommandHandler(typeof(RemoteAdminCommandHandler))]
+        public class ShowLog : ICommand
+        {
+            public string Command => "showlog";
+
+            public string[] Aliases => new string[] { };
+
+            public string Description => "View activity log for this server only";
+
+            public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
+            {
+                if (!sender.CheckPermission(PlayerPermissions.GivingItems))
+                {
+                    response = "Missing permission";
+                    return false;
+                }
+                try
+                {
+                    response = File.ReadAllText(Plugin.LogfileName);
+                    return true;
+                }
+                catch
+                {
+                    response = "Empty log";
+                    return true;
+                }
             }
         }
     }
