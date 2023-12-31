@@ -1,4 +1,4 @@
-﻿using Exiled.API.Enums;
+using Exiled.API.Enums;
 using Exiled.API.Extensions;
 using Exiled.API.Features;
 using Exiled.API.Features.Roles;
@@ -220,11 +220,12 @@ namespace AFKReplacer
                 spectator.GiveItemDelayed(item.Clone(), custom);
                 item.Destroy();
             }
-            foreach (KeyValuePair<ItemType, ushort> ammo in playerToReplace.Ammo)
+            List<ItemType> ammo = playerToReplace.Ammo.Keys.ToList();
+            foreach (ItemType a in ammo)
             {
-                Timing.CallDelayed(2f, () =>
+                Timing.CallDelayed(3f, () =>
                 {
-                    spectator.AddItem(ammo.Key);
+                    spectator.AddItem(a);
                 });
             }
             playerToReplace.ClearInventory();
