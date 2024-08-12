@@ -3,9 +3,6 @@ using Exiled.API.Features.Items;
 using Exiled.CustomItems.API.Features;
 using MEC;
 using PlayerRoles;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AFKReplacer
 {
