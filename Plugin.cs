@@ -10,15 +10,14 @@ using Exiled.Events.EventArgs.Player;
 using Exiled.Events.EventArgs.Server;
 using MEC;
 using PlayerRoles;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
+using Exiled.API.Features.Pools;
 
 namespace AFKReplacer
 {
+    using UnityEngine;
+    using Camera = Exiled.API.Features.Camera;
+
     public class Plugin : Plugin<Config>
     {
         public override string Name => "AFK Replacer";
@@ -47,6 +46,7 @@ namespace AFKReplacer
             Exiled.Events.Handlers.Server.RoundStarted += OnRoundStart;
             Exiled.Events.Handlers.Server.RoundEnded += OnRoundEnded;
             Exiled.Events.Handlers.Player.ChangingRole += OnChangingRole;
+            Exiled.Events.Handlers.Player.Left += OnLeft;
             base.OnEnabled();
         }
 
@@ -56,6 +56,7 @@ namespace AFKReplacer
             Exiled.Events.Handlers.Server.RoundStarted -= OnRoundStart;
             Exiled.Events.Handlers.Server.RoundEnded -= OnRoundEnded;
             Exiled.Events.Handlers.Player.ChangingRole -= OnChangingRole;
+            Exiled.Events.Handlers.Player.Left -= OnLeft;
 
             // This will prevent commands and other classes from being able to access
             // any state while the plugin is disabled
@@ -254,6 +255,75 @@ namespace AFKReplacer
                 spectator.Cuffer = playerCuffer;
             });
 
+        }
+        
+        private void OnLeft(LeftEventArgs ev)
+        {
+            if(ev.Player.IsDead)
+                return;
+
+            List<Player> spectators = ListPool<Player>.Pool.Get(Player.Get(RoleTypeId.Spectator));
+
+            if (spectators.IsEmpty())
+            {
+                ListPool<Player>.Pool.Return(spectators);
+                return;
+            }
+        
+            Player chosenSpectator = spectators.RandomItem();
+            
+            foreach (CustomRole customRole in ev.Player.GetCustomRoles())
+            {
+                customRole.AddRole(chosenSpectator);
+            }
+            
+            if(chosenSpectator.IsDead)
+                chosenSpectator.Role.Set(ev.Player.Role.Type);
+            
+            chosenSpectator.Teleport(ev.Player.Position);
+        
+            chosenSpectator.MaxHealth = ev.Player.MaxHealth;
+            chosenSpectator.Health = ev.Player.Health;
+            chosenSpectator.MaxArtificialHealth = ev.Player.MaxArtificialHealth;
+            chosenSpectator.ArtificialHealth = ev.Player.ArtificialHealth;
+            chosenSpectator.HumeShield = ev.Player.HumeShield;
+        
+            if (ev.Player.Role.Is(out Scp079Role scp))
+            {
+                float playerEnergy = scp.Energy;
+                int playerXp = scp.Experience;
+                int playerLevel = scp.Level;
+                Camera playerCamera = scp.Camera;
+                float playerBlackoutCoolDown = scp.BlackoutZoneCooldown;
+            
+                if (chosenSpectator.Role.Is(out Scp079Role newScp))
+                {
+                    newScp.Energy = playerEnergy;
+                    newScp.Experience = playerXp;
+                    newScp.Level = playerLevel;
+                    newScp.Camera = playerCamera;
+                    newScp.BlackoutZoneCooldown = playerBlackoutCoolDown;
+                }
+            }
+
+            Timing.CallDelayed(0.3f, () => chosenSpectator.ClearInventory());
+        
+            foreach (Item item in ev.Player.Items.ToArray())
+            {
+                CustomItem.TryGet(item, out CustomItem? customItem);
+                chosenSpectator.GiveItemDelayedDisconnect(item.Clone(), customItem);
+                item.Destroy();
+            }
+        
+            foreach (var itemType in ev.Player.Ammo)
+            {
+                Timing.CallDelayed(0.4f, () => chosenSpectator.SetAmmo(itemType.Key.GetAmmoType(), itemType.Value));
+            }
+        
+            ev.Player.ClearInventory();
+            ev.Player.Vaporize();
+            chosenSpectator.Broadcast(6, "You replaced someone who left the server!", shouldClearPrevious: true);
+            ListPool<Player>.Pool.Return(spectators);
         }
     }
 }

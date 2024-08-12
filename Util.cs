@@ -44,6 +44,18 @@ namespace AFKReplacer
                 }
             });
         }
+            
+        public static void GiveItemDelayedDisconnect(this Player player, Item item, CustomItem? customItemType) // Use for Disconnect
+        {
+            Timing.CallDelayed(0.4f, () =>
+            {
+                player.AddItem(item);
+                if (customItemType is not null)
+                {
+                    customItemType.TrackedSerials.Add(item.Serial);
+                }
+            });
+        }
 
         public static bool IsInElevator(this Player player)
         {
