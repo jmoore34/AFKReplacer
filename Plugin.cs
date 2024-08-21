@@ -13,11 +13,10 @@ using PlayerRoles;
 using System.Globalization;
 using Exiled.API.Features.Pools;
 using Camera = Exiled.API.Features.Camera;
+using CustomPlayerEffects;
 
 namespace AFKReplacer
 {
-    using CustomPlayerEffects;
-
     public class Plugin : Plugin<Config>
     {
         public override string Name => "AFK Replacer";
