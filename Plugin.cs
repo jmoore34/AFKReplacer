@@ -16,6 +16,8 @@ using Camera = Exiled.API.Features.Camera;
 
 namespace AFKReplacer
 {
+    using CustomPlayerEffects;
+
     public class Plugin : Plugin<Config>
     {
         public override string Name => "AFK Replacer";
@@ -309,7 +311,7 @@ namespace AFKReplacer
             foreach (Item item in ev.Player.Items.ToArray())
             {
                 CustomItem.TryGet(item, out CustomItem? customItem);
-                chosenSpectator.GiveItemDelayedDisconnect(item.Clone(), customItem);
+                chosenSpectator.GiveItemDelayed(item.Clone(), customItem);
                 item.Destroy();
             }
         
@@ -321,6 +323,7 @@ namespace AFKReplacer
             ev.Player.ClearInventory();
             ev.Player.Vaporize();
             chosenSpectator.Broadcast(6, "You replaced someone who left the server!", shouldClearPrevious: true);
+            chosenSpectator.EnableEffect<SpawnProtected>(5f);
             ListPool<Player>.Pool.Return(spectators);
         }
     }
