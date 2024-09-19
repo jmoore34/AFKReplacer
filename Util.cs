@@ -32,7 +32,7 @@ namespace AFKReplacer
 
         public static void GiveItemDelayed(this Player player, Item item, CustomItem? customItemType)
         {
-            Timing.CallDelayed(3f, () =>
+            Timing.CallDelayed(1.5f, () =>
             {
                 player.AddItem(item);
                 
