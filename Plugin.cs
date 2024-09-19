@@ -12,11 +12,13 @@ using MEC;
 using PlayerRoles;
 using System.Globalization;
 using Exiled.API.Features.Pools;
-using Camera = Exiled.API.Features.Camera;
 using CustomPlayerEffects;
 
 namespace AFKReplacer
 {
+    using UnityEngine;
+    using Camera = Exiled.API.Features.Camera;
+
     public class Plugin : Plugin<Config>
     {
         public override string Name => "AFK Replacer";
@@ -184,76 +186,26 @@ namespace AFKReplacer
             if (playerToReplace == null || playerToReplace.Position == null || !playerToReplace.IsAlive)
                 return;
 
-            var position = playerToReplace.Position;
             if (playerToReplace.IsInElevator())
                 return;
 
-            // regular spectator replacement
-            var spectators = Player.List.Where(p => p.Role.Type == RoleTypeId.Spectator);
+            // Regular spectator replacement
+            IEnumerable<Player> spectators = Player.List.Where(p => p.Role.Type == RoleTypeId.Spectator);
             if (spectators == null || spectators.IsEmpty())
                 return;
 
-            var spectator = spectators.RandomElement();
+            Player spectator = spectators.RandomElement();
 
             spectator.Role.Set(playerToReplace.Role.Type, SpawnReason.ForceClass, RoleSpawnFlags.UseSpawnpoint);
-            var roleName = $"<color={playerToReplace.Role.Color.ToHex()}>{playerToReplace.Role.Type.GetFullName()}</color>";
+            string roleName = $"<color={playerToReplace.Role.Color.ToHex()}>{playerToReplace.Role.Type.GetFullName()}</color>";
             foreach (CustomRole role in playerToReplace.GetCustomRoles())
             {
                 role.AddRole(spectator);
                 roleName = $"<color={playerToReplace.Role.Color.ToHex()}>{role.Name}</color>";
             }
-
-            var playerHealth = playerToReplace.Health;
-            var playerMaxHealth = playerToReplace.MaxHealth;
-            var playerArtificialHealth = playerToReplace.ArtificialHealth;
-            var playerMaxArtificialHealth = playerToReplace.MaxArtificialHealth;
-            var playerHumeShield = playerToReplace.HumeShield;
-            var playerCuffer = playerToReplace.Cuffer;
-            if (playerToReplace.Role.Is(out Scp079Role scp))
-            {
-                var playerEnergy = scp.Energy;
-                var playerXP = scp.Experience;
-                var playerLevel = scp.Level;
-                Timing.CallDelayed(2f, () =>
-                {
-                    if (spectator.Role.Is(out Scp079Role newScp))
-                    {
-                        newScp.Energy = playerEnergy;
-                        newScp.Experience = playerXP;
-                        newScp.Level = playerLevel;
-                    }
-                });
-            }
-            foreach (var item in playerToReplace.Items.ToArray())
-            {
-                CustomItem.TryGet(item, out CustomItem? custom);
-                spectator.GiveItemDelayed(item.Clone(), custom);
-                item.Destroy();
-            }
-            List<ItemType> ammo = playerToReplace.Ammo.Keys.ToList();
-            foreach (ItemType a in ammo)
-            {
-                Timing.CallDelayed(3f, () =>
-                {
-                    spectator.AddItem(a);
-                });
-            }
-            playerToReplace.ClearInventory();
-
-
+            
+            SetPlayerStats(playerToReplace, spectator);
             spectator.Broadcast(10, $"<color=yellow>You have replaced an AFK player and become <color={playerToReplace.Role.Color.ToHex()}>{roleName}</color>.</color>");
-            Timing.CallDelayed(2f, () =>
-            {
-                spectator.ClearInventory(); // called before items are added
-                spectator.Teleport(position);
-                spectator.Health = playerHealth;
-                spectator.MaxHealth = playerMaxHealth;
-                spectator.ArtificialHealth = playerArtificialHealth;
-                spectator.MaxArtificialHealth = playerMaxArtificialHealth;
-                spectator.HumeShield = playerHumeShield;
-                spectator.Cuffer = playerCuffer;
-            });
-
         }
         
         private void OnLeft(LeftEventArgs ev)
@@ -272,22 +224,26 @@ namespace AFKReplacer
             Player chosenSpectator = spectators.RandomItem();
             
             foreach (CustomRole customRole in ev.Player.GetCustomRoles())
-            {
                 customRole.AddRole(chosenSpectator);
-            }
             
             if(chosenSpectator.IsDead)
                 chosenSpectator.Role.Set(ev.Player.Role.Type);
+
+            SetPlayerStats(ev.Player, chosenSpectator);
+            chosenSpectator.Broadcast(6, "You replaced someone who left the server!", shouldClearPrevious: true);
             
-            chosenSpectator.Teleport(ev.Player.Position);
+            ListPool<Player>.Pool.Return(spectators);
+        }
+
+        private void SetPlayerStats(Player playerToReplace, Player replacingPlayer)
+        {
+            replacingPlayer.MaxHealth = playerToReplace.MaxHealth;
+            replacingPlayer.Health = playerToReplace.Health;
+            replacingPlayer.MaxArtificialHealth = playerToReplace.MaxArtificialHealth;
+            replacingPlayer.ArtificialHealth = playerToReplace.ArtificialHealth;
+            replacingPlayer.HumeShield = playerToReplace.HumeShield;
         
-            chosenSpectator.MaxHealth = ev.Player.MaxHealth;
-            chosenSpectator.Health = ev.Player.Health;
-            chosenSpectator.MaxArtificialHealth = ev.Player.MaxArtificialHealth;
-            chosenSpectator.ArtificialHealth = ev.Player.ArtificialHealth;
-            chosenSpectator.HumeShield = ev.Player.HumeShield;
-        
-            if (ev.Player.Role.Is(out Scp079Role scp))
+            if (playerToReplace.Role.Is(out Scp079Role scp))
             {
                 float playerEnergy = scp.Energy;
                 int playerXp = scp.Experience;
@@ -295,7 +251,7 @@ namespace AFKReplacer
                 Camera playerCamera = scp.Camera;
                 float playerBlackoutCoolDown = scp.BlackoutZoneCooldown;
             
-                if (chosenSpectator.Role.Is(out Scp079Role newScp))
+                if (replacingPlayer.Role.Is(out Scp079Role newScp))
                 {
                     newScp.Energy = playerEnergy;
                     newScp.Experience = playerXp;
@@ -304,26 +260,23 @@ namespace AFKReplacer
                     newScp.BlackoutZoneCooldown = playerBlackoutCoolDown;
                 }
             }
-
-            Timing.CallDelayed(0.3f, () => chosenSpectator.ClearInventory());
-        
-            foreach (Item item in ev.Player.Items.ToArray())
+            
+            foreach (Item item in playerToReplace.Items.ToArray())
             {
                 CustomItem.TryGet(item, out CustomItem? customItem);
-                chosenSpectator.GiveItemDelayed(item.Clone(), customItem);
+                replacingPlayer.GiveItemDelayed(item.Clone(), customItem);
                 item.Destroy();
             }
         
-            foreach (var itemType in ev.Player.Ammo)
-            {
-                Timing.CallDelayed(0.4f, () => chosenSpectator.SetAmmo(itemType.Key.GetAmmoType(), itemType.Value));
-            }
-        
-            ev.Player.ClearInventory();
-            ev.Player.Vaporize();
-            chosenSpectator.Broadcast(6, "You replaced someone who left the server!", shouldClearPrevious: true);
-            chosenSpectator.EnableEffect<SpawnProtected>(5f);
-            ListPool<Player>.Pool.Return(spectators);
+            foreach (KeyValuePair<ItemType, ushort> kvp in playerToReplace.Ammo)
+                Timing.CallDelayed(0.75f, () => replacingPlayer.SetAmmo(kvp.Key.GetAmmoType(), kvp.Value));
+            
+            playerToReplace.ClearInventory();
+            playerToReplace.Vaporize();
+            
+            replacingPlayer.EnableEffect<SpawnProtected>(5f);
+            replacingPlayer.Teleport(playerToReplace.Position);
+            Timing.CallDelayed(0.5f, () => replacingPlayer.ClearInventory());
         }
     }
 }
