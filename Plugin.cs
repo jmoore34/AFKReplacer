@@ -212,7 +212,6 @@ namespace AFKReplacer
                 return;
 
             List<Player> spectators = ListPool<Player>.Pool.Get(Player.Get(RoleTypeId.Spectator));
-
             if (spectators.IsEmpty())
             {
                 ListPool<Player>.Pool.Return(spectators);
@@ -220,7 +219,6 @@ namespace AFKReplacer
             }
         
             Player chosenSpectator = spectators.RandomItem();
-            
             foreach (CustomRole customRole in ev.Player.GetCustomRoles())
                 customRole.AddRole(chosenSpectator);
             
@@ -229,7 +227,6 @@ namespace AFKReplacer
 
             SetPlayerStats(ev.Player, chosenSpectator);
             chosenSpectator.Broadcast(6, "You replaced someone who left the server!", shouldClearPrevious: true);
-            
             ListPool<Player>.Pool.Return(spectators);
         }
 
@@ -269,11 +266,11 @@ namespace AFKReplacer
             foreach (KeyValuePair<ItemType, ushort> kvp in playerToReplace.Ammo)
                 Timing.CallDelayed(0.75f, () => replacingPlayer.SetAmmo(kvp.Key.GetAmmoType(), kvp.Value));
             
-            playerToReplace.ClearInventory();
-            playerToReplace.Vaporize();
-            
             replacingPlayer.EnableEffect<SpawnProtected>(5f);
             replacingPlayer.Teleport(playerToReplace.Position);
+            
+            playerToReplace.ClearInventory();
+            playerToReplace.Vaporize();
             Timing.CallDelayed(0.5f, () => replacingPlayer.ClearInventory());
         }
     }
