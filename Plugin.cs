@@ -45,7 +45,7 @@ namespace AFKReplacer
 
             // Register event handlers
             Exiled.Events.Handlers.Server.RoundStarted += OnRoundStart;
-            Exiled.Events.Handlers.Server.RoundEnded += OnRoundEnded;
+            Exiled.Events.Handlers.Server.RestartingRound += OnRestartingRound;
             Exiled.Events.Handlers.Player.ChangingRole += OnChangingRole;
             base.OnEnabled();
         }
@@ -54,7 +54,7 @@ namespace AFKReplacer
         {
             // Deregister event handlers
             Exiled.Events.Handlers.Server.RoundStarted -= OnRoundStart;
-            Exiled.Events.Handlers.Server.RoundEnded -= OnRoundEnded;
+            Exiled.Events.Handlers.Server.RestartingRound -= OnRestartingRound;
             Exiled.Events.Handlers.Player.ChangingRole -= OnChangingRole;
 
             // This will prevent commands and other classes from being able to access
@@ -70,7 +70,7 @@ namespace AFKReplacer
             coroutine = Timing.RunCoroutine(timer());
         }
 
-        public void OnRoundEnded(RoundEndedEventArgs ev)
+        public void OnRestartingRound()
         {
             Timing.KillCoroutines(coroutine);
         }
@@ -168,6 +168,7 @@ namespace AFKReplacer
                 {
                     Log.Error(e);
                 }
+
                 yield return Timing.WaitForSeconds(1f);
             }
         }
