@@ -8,19 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EXILED" Version="8.9.2" />
+    <Reference Include="Assembly-CSharp-firstpass" HintPath="$(MANAGED)\Assembly-CSharp-firstpass.dll" Private="false" />
+    <Reference Include="Mirror" HintPath="$(MANAGED)\Mirror.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(MANAGED)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(MANAGED)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="$(MANAGED)\UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="Pooling" HintPath="$(MANAGED)\Pooling.dll" Private="false" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Assembly-CSharp-firstpass"
-      HintPath="$(MANAGED)\Assembly-CSharp-firstpass.dll" Private="false" />
-    <Reference Include="Mirror" HintPath="$(MANAGED)\Mirror.dll" Private="false" />
-    <Reference Include="UnityEngine" HintPath="$(MANAGED)\UnityEngine.dll" Private="false" />
-    <Reference Include="UnityEngine.CoreModule" HintPath="$(MANAGED)\UnityEngine.CoreModule.dll"
-      Private="false" />
-    <Reference Include="UnityEngine.PhysicsModule"
-      HintPath="$(MANAGED)\UnityEngine.PhysicsModule.dll" Private="false" />
-    <Reference Include="Pooling" HintPath="$(MANAGED)\Pooling.dll" Private="false" />
+    <PackageReference Include="ExMod.Exiled" Version="9.0.1" />
   </ItemGroup>
 
 </Project>
