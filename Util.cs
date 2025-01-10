@@ -3,9 +3,6 @@ using Exiled.API.Features.Items;
 using Exiled.CustomItems.API.Features;
 using MEC;
 using PlayerRoles;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AFKReplacer
 {
@@ -35,13 +32,14 @@ namespace AFKReplacer
 
         public static void GiveItemDelayed(this Player player, Item item, CustomItem? customItemType)
         {
-            Timing.CallDelayed(3f, () =>
+            Timing.CallDelayed(1.5f, () =>
             {
                 player.AddItem(item);
-                if (customItemType is not null)
-                {
-                    customItemType.TrackedSerials.Add(item.Serial);
-                }
+                
+                if(customItemType is null)
+                    return;
+                
+                customItemType.TrackedSerials.Add(item.Serial);
             });
         }
 
