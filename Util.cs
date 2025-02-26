@@ -37,10 +37,13 @@ namespace AFKReplacer
         {
             Timing.CallDelayed(3f, () =>
             {
-                player.AddItem(item);
                 if (customItemType is not null)
                 {
-                    customItemType.TrackedSerials.Add(item.Serial);
+                    customItemType.Give(player);
+                }
+                else
+                {
+                    player.AddItem(item);
                 }
             });
         }
